@@ -88,6 +88,7 @@ class PhoneInput extends React.Component {
     showDropdown: PropTypes.bool,
 
     onChange: PropTypes.func,
+    formatNumber: PropTypes.func,
     onFocus: PropTypes.func,
     onBlur: PropTypes.func,
     onClick: PropTypes.func,
@@ -132,6 +133,7 @@ class PhoneInput extends React.Component {
     autoFormat: true,
     enableAreaCodes: false,
     enableTerritories: false,
+    showCountryCodeInDropdown: false,
     disableCountryCode: false,
     disableDropdown: false,
     enableLongNumbers: false,
@@ -570,14 +572,23 @@ class PhoneInput extends React.Component {
         }
         freezeSelection = false;
       }
-      formattedNumber = this.formatNumber(inputNumber, newSelectedCountry);
+      formattedNumber = this.formatNumber(inputNumber, newSelectedCountry, e);
       newSelectedCountry = newSelectedCountry.dialCode ? newSelectedCountry : selectedCountry;
     }
 
-    const oldCaretPosition = e.target.selectionStart;
+    let oldCaretPosition = e.target.selectionStart;
     let caretPosition = e.target.selectionStart;
     const oldFormattedText = this.state.formattedNumber;
     const diff = formattedNumber.length - oldFormattedText.length;
+
+    if (this.props.formatNumber) {
+      let { caretPosition: newCaretPosition, formattedNumber: newFormattedNumber } = this.props.formatNumber(formattedNumber, newSelectedCountry);
+
+      if (newCaretPosition) {
+        caretPosition = newCaretPosition;
+      }
+      formattedNumber = newFormattedNumber;
+    }
 
     this.setState({
       formattedNumber,
@@ -912,7 +923,7 @@ class PhoneInput extends React.Component {
 
   render() {
     const { onlyCountries, selectedCountry, showDropdown, formattedNumber, hiddenAreaCodes } = this.state;
-    const { disableDropdown, renderStringAsFlag, isValid, defaultErrorMessage, specialLabel } = this.props;
+    const { disableDropdown, renderStringAsFlag, isValid, defaultErrorMessage, label: Label, labelPosition, labelProps = {}} = this.props;
 
     let isValidValue, errorMessage;
     if (typeof isValid === 'boolean') {
@@ -932,32 +943,62 @@ class PhoneInput extends React.Component {
       [this.props.containerClass]: true,
       'react-tel-input': true,
     });
-    const arrowClasses = classNames({'arrow': true, 'up': showDropdown});
+    const arrowClasses = classNames({'arrow': true, 'up': showDropdown, 'down': !showDropdown});
     const inputClasses = classNames({
       'form-control': true,
       'invalid-number': !isValidValue,
       'open': showDropdown,
+      'closed': !showDropdown,
       [this.props.inputClass]: true,
     });
     const selectedFlagClasses = classNames({
+      'ui dropdown': true,
       'selected-flag': true,
       'open': showDropdown,
+      'closed': !showDropdown,
     });
     const flagViewClasses = classNames({
       'flag-dropdown': true,
+      'label': true,
       'invalid-number': !isValidValue,
       'open': showDropdown,
+      'closed': !showDropdown,
       [this.props.buttonClass]: true,
     });
     const inputFlagClasses = `flag ${selectedCountry && selectedCountry.iso2}`;
 
     return (
       <div
-        className={`${containerClasses} ${this.props.className}`}
+        className={`${containerClasses} ${this.props.className} ui labeled input`}
         style={this.props.style || this.props.containerStyle}
         onKeyDown={this.handleKeydown}>
-        {specialLabel && <div className='special-label'>{specialLabel}</div>}
         {errorMessage && <div className='invalid-number-message'>{errorMessage}</div>}
+        <div
+            className={flagViewClasses}
+            style={this.props.buttonStyle}
+            ref={el => this.dropdownContainerRef = el}
+        >
+          {renderStringAsFlag ?
+              <div className={selectedFlagClasses}>{renderStringAsFlag}</div>
+              :
+              <div
+                  onClick={disableDropdown ? undefined : this.handleFlagDropdownClick}
+                  className={selectedFlagClasses}
+                  title={selectedCountry ? `${selectedCountry.localName || selectedCountry.name}: + ${selectedCountry.dialCode}` : ''}
+                  tabIndex={disableDropdown ? '-1' : '0'}
+                  role='button'
+                  aria-haspopup="listbox"
+                  aria-expanded={showDropdown ? true : undefined}
+              >
+                <div className={"text"}>
+                  <i className={inputFlagClasses}></i>
+                  {selectedCountry ? <span className={"dial-code"}>+ {selectedCountry.dialCode}</span> : ''}
+                  {!disableDropdown && <div className={arrowClasses}></div>}
+                </div>
+              </div>}
+
+          {showDropdown && this.getCountryDropdownList()}
+        </div>
         <input
           className={inputClasses}
           style={this.props.inputStyle}
@@ -982,31 +1023,7 @@ class PhoneInput extends React.Component {
             }
           }}
         />
-
-        <div
-          className={flagViewClasses}
-          style={this.props.buttonStyle}
-          ref={el => this.dropdownContainerRef = el}
-        >
-          {renderStringAsFlag ?
-          <div className={selectedFlagClasses}>{renderStringAsFlag}</div>
-          :
-          <div
-            onClick={disableDropdown ? undefined : this.handleFlagDropdownClick}
-            className={selectedFlagClasses}
-            title={selectedCountry ? `${selectedCountry.localName || selectedCountry.name}: + ${selectedCountry.dialCode}` : ''}
-            tabIndex={disableDropdown ? '-1' : '0'}
-            role='button'
-            aria-haspopup="listbox"
-            aria-expanded={showDropdown ? true : undefined}
-          >
-            <div className={inputFlagClasses}>
-              {!disableDropdown && <div className={arrowClasses}></div>}
-            </div>
-          </div>}
-
-          {showDropdown && this.getCountryDropdownList()}
-        </div>
+        {Label && labelPosition === 'right' && <Label {...labelProps} />}
       </div>
     );
   }
