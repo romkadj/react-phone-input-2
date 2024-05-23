@@ -49,6 +49,7 @@ class Demo extends React.Component {
           <p>Exclude countries (usa, canada)</p>
           <PhoneInput
             country='no'
+            disableCountryCode={true}
             excludeCountries={['us', 'ca']}
           />
           <p>Only countries</p>
