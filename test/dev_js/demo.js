@@ -2,6 +2,7 @@ import React from 'react';
 import { render } from 'react-dom';
 import PhoneInput from '../../src/index';
 import '../../src/style/style.less';
+import {FormPhoneInput} from "./TestPhoneNumber";
 
 
 class Demo extends React.Component {
@@ -47,11 +48,7 @@ class Demo extends React.Component {
           href="https://github.com/bl00mber/react-phone-input-2">Nick Reiley</a></p>
         <div style={{display: 'inline-block', verticalAlign: 'top'}}>
           <p>Exclude countries (usa, canada)</p>
-          <PhoneInput
-            country='no'
-            disableCountryCode={true}
-            excludeCountries={['us', 'ca']}
-          />
+          <FormPhoneInput />
           <p>Only countries</p>
           <PhoneInput
             country='gb'
