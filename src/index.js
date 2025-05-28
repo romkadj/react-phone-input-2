@@ -1044,6 +1044,7 @@ class PhoneInput extends React.Component {
                     role='button'
                     aria-haspopup="listbox"
                     aria-expanded={showDropdown ? true : undefined}
+                    aria-label={selectedCountry ? `${selectedCountry.localName || selectedCountry.name}: + ${selectedCountry.dialCode}` : ''}
                 >
                   <div className={"text"}>
                     <i className={inputFlagClasses}></i>
